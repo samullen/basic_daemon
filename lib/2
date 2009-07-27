@@ -4,7 +4,7 @@ class BasicDaemon
   VERSION = '0.0.2'
 
   DEFAULT_OPTIONS = {
-    :pidfile => File.basename($PROGRAM_NAME, File.extname($PROGRAM_NAME)),
+    :pidfile => File.basename(__FILE__, File.extname(__FILE__)),
     :piddir => '/var/lock',
     :workingdir => '/'
   }
@@ -26,9 +26,12 @@ class BasicDaemon
 
     opts = DEFAULT_OPTIONS.merge opts
 
-    @piddir     = opts[:piddir]
-    @pidfile    = @piddir + '/' + opts[:pidfile]
+    @pidfile    = opts[:piddir] + '/' + opts[:pidfile]
     @workingdir = opts[:workingdir]
+
+    at_exit do
+      self.delpid
+    end
   end
 
 #------------------------------------------------------------------------------#
@@ -43,10 +46,6 @@ class BasicDaemon
     if pid
       STDERR.puts "pidfile #{@pidfile} already exists. Daemon already running?"
       exit!
-    end
-
-    at_exit do
-      self.delpid
     end
 
     self.daemonize
