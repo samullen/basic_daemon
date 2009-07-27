@@ -22,4 +22,7 @@ def test_specific_init
   assert_equal '.', d.workingdir
 end
 
+def test_start
+end
+
 end

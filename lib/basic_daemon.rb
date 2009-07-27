@@ -50,6 +50,13 @@ class BasicDaemon
     end
 
     self.daemonize
+    self.run
+
+#     unless block_given?
+#       self.run
+#     else
+#       yield
+#     end
   end
   
 #------------------------------------------------------------------------------#
@@ -75,12 +82,12 @@ class BasicDaemon
       exit!
     end
 
-    Dir.chdir @workingdir #----- chdir to working directory
-    File.umask 0000 #----- clear out file mode creation mask
-    STDIN.reopen("/dev/null")
-    STDOUT.reopen("/dev/null", "w")
-    STDERR.reopen("/dev/null", "w")
-
+    Dir::chdir(@workingdir) #----- chdir to working directory
+    File::umask(0) #----- clear out file mode creation mask
+    STDIN.reopen("/dev/null", 'r')
+#     STDOUT.reopen("/dev/null", "w")
+#     STDERR.reopen("/dev/null", "w")
+puts 'got here'
     begin
       open(@pidfile, "w") do |f|
         f.puts Process.pid
@@ -136,5 +143,8 @@ class BasicDaemon
       STDERR.puts "ERROR: Unable to unlink #{@pidfile}: (#{e.class}) #{e.message}"
       exit
     end
+  end
+
+  def run
   end
 end
