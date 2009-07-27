@@ -85,9 +85,9 @@ class BasicDaemon
     Dir::chdir(@workingdir) #----- chdir to working directory
     File::umask(0) #----- clear out file mode creation mask
     STDIN.reopen("/dev/null", 'r')
-#     STDOUT.reopen("/dev/null", "w")
-#     STDERR.reopen("/dev/null", "w")
-puts 'got here'
+    STDOUT.reopen("/dev/null", "w")
+    STDERR.reopen("/dev/null", "w")
+
     begin
       open(@pidfile, "w") do |f|
         f.puts Process.pid
