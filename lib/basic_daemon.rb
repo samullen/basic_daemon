@@ -41,11 +41,15 @@ class BasicDaemon
 
     begin
       pid = open(self.pidpath, 'r').read
+    rescue Errno::EACCES => e
+      STDERR.puts "Error: unable to open file #{self.pidpath} for reading:\n\t"+
+        "(#{e.class}) #{e.message}"
+      exit!
     rescue => e
     end
 
     if pid
-      STDERR.puts "pidfile #{self.pidpath} already exists. Daemon already running?"
+      STDERR.puts "pidfile #{self.pidpath} with pid #{pid} already exists. Daemon already running?"
       exit!
     end
 
