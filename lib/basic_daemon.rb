@@ -1,7 +1,7 @@
 class BasicDaemon
-  attr_accessor :pidfile, :piddir, :workingdir
+  attr_accessor :workingdir, :pidfile, :piddir
 
-  VERSION = '0.0.2'
+  VERSION = '0.0.3'
 
   DEFAULT_OPTIONS = {
     :pidfile => File.basename($PROGRAM_NAME, File.extname($PROGRAM_NAME)),
@@ -27,8 +27,12 @@ class BasicDaemon
     opts = DEFAULT_OPTIONS.merge opts
 
     @piddir     = opts[:piddir]
-    @pidfile    = @piddir + '/' + opts[:pidfile]
+    @pidfile    = opts[:pidfile]
     @workingdir = opts[:workingdir]
+  end
+
+  def pidpath
+    @piddir + '/' + @pidfile
   end
 
 #------------------------------------------------------------------------------#
@@ -36,12 +40,12 @@ class BasicDaemon
     pid = nil
 
     begin
-      pid = open(@pidfile, 'r').read
+      pid = open(self.pidpath, 'r').read
     rescue => e
     end
 
     if pid
-      STDERR.puts "pidfile #{@pidfile} already exists. Daemon already running?"
+      STDERR.puts "pidfile #{self.pidpath} already exists. Daemon already running?"
       exit!
     end
 
@@ -89,11 +93,11 @@ class BasicDaemon
     STDERR.reopen("/dev/null", "w")
 
     begin
-      open(@pidfile, "w") do |f|
+      open(self.pidpath, "w") do |f|
         f.puts Process.pid
       end
     rescue
-      STDERR.puts "Error: Unable to open #{@pidfile} for writing:\n\t" +
+      STDERR.puts "Error: Unable to open #{self.pidpath} for writing:\n\t" +
         "(#{e.class}) #{e.message}"
     end
   end
@@ -103,16 +107,16 @@ class BasicDaemon
     pid = nil
 
     begin
-      open(@pidfile, "r") do |f|
+      open(self.pidpath, "r") do |f|
         pid = f.read.to_i
       end
     rescue
-      STDERR.puts "Error: Unable to open #{@pidfile} for reading:\n\t" +
+      STDERR.puts "Error: Unable to open #{self.pidpath} for reading:\n\t" +
         "(#{e.class}) #{e.message}"
     end
 
     unless pid
-      STDERR.puts "pidfile #{@pidfile} does not exist. Daemon not running?\n"
+      STDERR.puts "pidfile #{self.pidpath} does not exist. Daemon not running?\n"
       return # not an error in a restart
     end
 
@@ -138,9 +142,9 @@ class BasicDaemon
 #------------------------------------------------------------------------------#
   def delpid
     begin
-      File.unlink(@pidfile)
+      File.unlink(self.pidpath)
     rescue => e
-      STDERR.puts "ERROR: Unable to unlink #{@pidfile}: (#{e.class}) #{e.message}"
+      STDERR.puts "ERROR: Unable to unlink #{self.pidpath}: (#{e.class}) #{e.message}"
       exit
     end
   end
