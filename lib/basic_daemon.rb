@@ -5,7 +5,7 @@ class BasicDaemon
 
   DEFAULT_OPTIONS = {
     :pidfile => File.basename($PROGRAM_NAME, File.extname($PROGRAM_NAME)),
-    :piddir => '/var/lock',
+    :piddir => '/tmp',
     :workingdir => '/'
   }
 
