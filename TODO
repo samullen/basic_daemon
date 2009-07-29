@@ -1,0 +1,1 @@
+- Create dynamic attributes through the constructor so subclassing makes more sense

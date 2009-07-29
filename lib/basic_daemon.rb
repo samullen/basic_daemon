@@ -1,5 +1,6 @@
 class BasicDaemon
   attr_accessor :workingdir, :pidfile, :piddir
+  attr_reader :pid
 
   VERSION = '0.0.3'
 
@@ -29,6 +30,7 @@ class BasicDaemon
     @piddir     = opts[:piddir]
     @pidfile    = opts[:pidfile]
     @workingdir = opts[:workingdir]
+    @pid        = nil
   end
 
   def pidpath
@@ -37,10 +39,8 @@ class BasicDaemon
 
 #------------------------------------------------------------------------------#
   def start
-    pid = nil
-
     begin
-      pid = open(self.pidpath, 'r').read
+      @pid = open(self.pidpath, 'r').read
     rescue Errno::EACCES => e
       STDERR.puts "Error: unable to open file #{self.pidpath} for reading:\n\t"+
         "(#{e.class}) #{e.message}"
@@ -48,8 +48,8 @@ class BasicDaemon
     rescue => e
     end
 
-    if pid
-      STDERR.puts "pidfile #{self.pidpath} with pid #{pid} already exists. Daemon already running?"
+    if @pid
+      STDERR.puts "pidfile #{self.pidpath} with pid #{@pid} already exists. Daemon already running?"
       exit!
     end
 
@@ -69,8 +69,6 @@ class BasicDaemon
   
 #------------------------------------------------------------------------------#
   def daemonize
-    pid = nil
-
     #----- Fork off from the calling process -----#
     begin
       fork && exit!
@@ -98,7 +96,8 @@ class BasicDaemon
 
     begin
       open(self.pidpath, "w") do |f|
-        f.puts Process.pid
+        @pid = Process.pid
+        f.puts @pid
       end
     rescue
       STDERR.puts "Error: Unable to open #{self.pidpath} for writing:\n\t" +
@@ -108,32 +107,29 @@ class BasicDaemon
 
 #------------------------------------------------------------------------------#
   def stop
-    pid = nil
-
     begin
       open(self.pidpath, "r") do |f|
-        pid = f.read.to_i
+        @pid = f.read.to_i
       end
     rescue
       STDERR.puts "Error: Unable to open #{self.pidpath} for reading:\n\t" +
         "(#{e.class}) #{e.message}"
     end
 
-    unless pid
+    unless @pid
       STDERR.puts "pidfile #{self.pidpath} does not exist. Daemon not running?\n"
       return # not an error in a restart
     end
-
+puts @pid
     begin
       while true do
-        Process.kill("TERM", pid)
+        Process.kill("TERM", self.pid)
         sleep(0.1)
       end
+    rescue Errno::ESRCH
     rescue => e
-      unless e.class == Errno::ESRCH
-        STDERR.puts "unable to terminate process: (#{e.class}) #{e.message}"
-        exit!
-      end
+      STDERR.puts "unable to terminate process: (#{e.class}) #{e.message}"
+      exit!
     end
   end
 
@@ -153,6 +149,7 @@ class BasicDaemon
     end
   end
 
+#------------------------------------------------------------------------------#
   def run
   end
 end

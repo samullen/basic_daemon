@@ -34,10 +34,24 @@ def test_attribute_changes
   assert_equal '/etc', d.workingdir = '/etc'
 end
 
-def test_lifecycle
-  d = BasicDaemon.new
-  d.start
-  d.stop
-end
+# def test_pidfile_creation_deletion
+#   pid = nil
+# 
+#   d = BasicDaemon.new
+#   d2 = BasicDaemon.new
+#   d.start
+# 
+#   #----- testing creation of pid file -----#
+#   assert File.exists?("/tmp/basicdaemon_test")
+# 
+#   open("/tmp/basicdaemon_test", "r") do |f|
+#     pid = f.read.to_i
+#   end
+#   assert_equal d.pid, pid
+# 
+# #   d2.stop
+# 
+# #   flunk File.exists?("/tmp/basicdaemon_test")
+# end
 
 end
