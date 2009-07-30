@@ -2,7 +2,7 @@ class BasicDaemon
   attr_accessor :workingdir, :pidfile, :piddir
   attr_reader :pid
 
-  VERSION = '0.0.3'
+  VERSION = '0.0.4'
 
   DEFAULT_OPTIONS = {
     :pidfile => File.basename($PROGRAM_NAME, File.extname($PROGRAM_NAME)),
@@ -49,7 +49,8 @@ class BasicDaemon
     end
 
     if @pid
-      STDERR.puts "pidfile #{self.pidpath} with pid #{@pid} already exists. Daemon already running?"
+      STDERR.puts "pidfile #{self.pidpath} with pid #{@pid} already exists. " .
+        "Make sure this daemon is not already running."
       exit!
     end
 
@@ -72,37 +73,31 @@ class BasicDaemon
     #----- Fork off from the calling process -----#
     begin
       fork && exit!
-    rescue => e
-      STDERR.puts "Error: Failed to fork primary parent: \n\t: " +
-        "(#{e.class}) #{e.message} "
-      exit!
-    end
-
-    Process.setsid #----- make forked process session leader
-
-    #----- Fork off from the calling forked sub-process -----#
-    begin
+      Process.setsid #----- make forked process session leader
       fork && exit!
     rescue => e
-      STDERR.puts "Error: Failed to fork daemon: \n\t(#{e.class}) #{e.message}"
+      STDERR.puts "Error: Failed to fork proeprly: \n\t: " +
+        "(#{e.class}) #{e.message} "
       exit!
     end
 
     Dir::chdir(@workingdir) #----- chdir to working directory
     File::umask(0) #----- clear out file mode creation mask
-    STDIN.reopen("/dev/null", 'r')
-    STDOUT.reopen("/dev/null", "w")
-    STDERR.reopen("/dev/null", "w")
 
     begin
       open(self.pidpath, "w") do |f|
         @pid = Process.pid
         f.puts @pid
       end
-    rescue
+    rescue => e
       STDERR.puts "Error: Unable to open #{self.pidpath} for writing:\n\t" +
         "(#{e.class}) #{e.message}"
+      exit!
     end
+
+    STDIN.reopen("/dev/null", 'r')
+    STDOUT.reopen("/dev/null", "w")
+    STDERR.reopen("/dev/null", "w")
   end
 
 #------------------------------------------------------------------------------#
@@ -111,16 +106,16 @@ class BasicDaemon
       open(self.pidpath, "r") do |f|
         @pid = f.read.to_i
       end
-    rescue
-      STDERR.puts "Error: Unable to open #{self.pidpath} for reading:\n\t" +
-        "(#{e.class}) #{e.message}"
+    rescue => e
+#       STDERR.puts "Error: Unable to open #{self.pidpath} for reading:\n\t" +
+#         "(#{e.class}) #{e.message}"
     end
 
     unless @pid
       STDERR.puts "pidfile #{self.pidpath} does not exist. Daemon not running?\n"
       return # not an error in a restart
     end
-puts @pid
+
     begin
       while true do
         Process.kill("TERM", self.pid)
