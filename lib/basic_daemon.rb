@@ -10,12 +10,13 @@ class BasicDaemon
     :workingdir => '/'
   }
 
+  #----------------------------------------------------------------------------#
   def initialize(*args)
     opts = {}
 
     case
     when args.length == 0 then
-    when args.length == 1 then
+    when args.length == 1 && args[0].class == Hash then
       arg = args.shift
 
       if arg.class == Hash
@@ -37,7 +38,7 @@ class BasicDaemon
     @piddir + '/' + @pidfile
   end
 
-#------------------------------------------------------------------------------#
+  #----------------------------------------------------------------------------#
   def start
     begin
       @pid = open(self.pidpath, 'r').read
@@ -49,7 +50,7 @@ class BasicDaemon
     end
 
     if @pid
-      STDERR.puts "pidfile #{self.pidpath} with pid #{@pid} already exists. " .
+      STDERR.puts "pidfile #{self.pidpath} with pid #{@pid} already exists. " +
         "Make sure this daemon is not already running."
       exit!
     end
@@ -58,7 +59,7 @@ class BasicDaemon
       self.delpid
     end
 
-    self.daemonize
+    daemonize
     self.run
 
 #     unless block_given?
@@ -68,7 +69,58 @@ class BasicDaemon
 #     end
   end
   
-#------------------------------------------------------------------------------#
+  #----------------------------------------------------------------------------#
+  def stop
+    begin
+      @pid = open(self.pidpath, "r").read.to_i
+    rescue Errno::EACCES => e
+      STDERR.puts "Error: Unable to open #{self.pidpath} for reading:\n\t" +
+        "(#{e.class}) #{e.message}"
+      exit!
+    rescue => e
+    end
+
+    unless @pid
+      STDERR.puts "pidfile #{self.pidpath} does not exist. Daemon not running?\n"
+      return # not an error in a restart
+    end
+
+    begin
+      while true do
+        Process.kill("TERM", self.pid)
+        sleep(0.1)
+      end
+    rescue Errno::ESRCH
+    rescue => e
+      STDERR.puts "unable to terminate process: (#{e.class}) #{e.message}"
+      exit!
+    end
+  end
+
+  #----------------------------------------------------------------------------#
+  def restart
+    self.stop
+    self.start
+  end
+
+  #----------------------------------------------------------------------------#
+  def delpid
+    begin
+      File.unlink(self.pidpath)
+    rescue => e
+      STDERR.puts "ERROR: Unable to unlink #{self.pidpath}:\n\t" +
+        "(#{e.class}) #{e.message}"
+      exit
+    end
+  end
+
+  #----------------------------------------------------------------------------#
+  def run
+  end
+
+  private
+
+  #----------------------------------------------------------------------------#
   def daemonize
     #----- Fork off from the calling process -----#
     begin
@@ -76,7 +128,7 @@ class BasicDaemon
       Process.setsid #----- make forked process session leader
       fork && exit!
     rescue => e
-      STDERR.puts "Error: Failed to fork proeprly: \n\t: " +
+      STDERR.puts "Error: Failed to fork properly: \n\t: " +
         "(#{e.class}) #{e.message} "
       exit!
     end
@@ -98,53 +150,8 @@ class BasicDaemon
     STDIN.reopen("/dev/null", 'r')
     STDOUT.reopen("/dev/null", "w")
     STDERR.reopen("/dev/null", "w")
+
+    #----- calling process proceeds from here -----#
   end
 
-#------------------------------------------------------------------------------#
-  def stop
-    begin
-      open(self.pidpath, "r") do |f|
-        @pid = f.read.to_i
-      end
-    rescue => e
-#       STDERR.puts "Error: Unable to open #{self.pidpath} for reading:\n\t" +
-#         "(#{e.class}) #{e.message}"
-    end
-
-    unless @pid
-      STDERR.puts "pidfile #{self.pidpath} does not exist. Daemon not running?\n"
-      return # not an error in a restart
-    end
-
-    begin
-      while true do
-        Process.kill("TERM", self.pid)
-        sleep(0.1)
-      end
-    rescue Errno::ESRCH
-    rescue => e
-      STDERR.puts "unable to terminate process: (#{e.class}) #{e.message}"
-      exit!
-    end
-  end
-
-#------------------------------------------------------------------------------#
-  def restart
-    self.stop
-    self.start
-  end
-
-#------------------------------------------------------------------------------#
-  def delpid
-    begin
-      File.unlink(self.pidpath)
-    rescue => e
-      STDERR.puts "ERROR: Unable to unlink #{self.pidpath}: (#{e.class}) #{e.message}"
-      exit
-    end
-  end
-
-#------------------------------------------------------------------------------#
-  def run
-  end
 end

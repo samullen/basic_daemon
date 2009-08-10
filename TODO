@@ -1,1 +1,2 @@
 - Create dynamic attributes through the constructor so subclassing makes more sense
+- Add an at_exit attribute pointing to a block which will be called at exit
