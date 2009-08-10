@@ -22,7 +22,7 @@ class MyDaemon < BasicDaemon
   end
 end
 
-d = MyDaemon.new({:pidfile => pidfile, :piddir => basedir, :workingdir => basedir})
+d = MyDaemon.new(:pidfile => pidfile, :piddir => basedir, :workingdir => basedir)
 
 if ARGV[0] == 'start'
   d.start
@@ -36,4 +36,5 @@ else
   exit!
 end
 
+puts 'got here'
 exit
