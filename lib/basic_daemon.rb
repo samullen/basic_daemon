@@ -2,7 +2,7 @@ class BasicDaemon
   attr_accessor :workingdir, :pidfile, :piddir
   attr_reader :pid
 
-  VERSION = '0.0.4'
+  VERSION = '0.0.5'
 
   DEFAULT_OPTIONS = {
     :pidfile => File.basename($PROGRAM_NAME, File.extname($PROGRAM_NAME)),
