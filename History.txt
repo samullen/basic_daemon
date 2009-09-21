@@ -1,0 +1,11 @@
+= 0.0.5 - 20090921
+
+Began moving tests to RSpec. 
+
+= 0.0.5 - 20090812
+
+Started recording changes to the repository in to line up with git commit
+messages.
+
+* addition of License.txt and History.txt, though mostly empty
+* Initial gemspec was created. The daemon is now gemable

@@ -6,6 +6,6 @@ Gem::Specification.new do |spec|
   spec.homepage = 'http://github.com/samullen/BasicDaemon/'
   spec.summary = 'A simple ruby library for daemonizing processes'
   spec.description = spec.summary
-  spec.files = ["README.txt", "License.txt", "History.txt", "TODO.txt", "lib/basic_daemon.rb"]
+  spec.files = ["README.txt", "License.txt", "TODO.txt", "lib/basic_daemon.rb"]
   spec.test_files = ["test/basicdaemon_test.rb"]
 end
