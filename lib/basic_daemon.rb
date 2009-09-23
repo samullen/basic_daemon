@@ -2,7 +2,7 @@ class BasicDaemon
   attr_accessor :workingdir, :pidfile, :piddir
   attr_reader :pid
 
-  VERSION = '0.0.5'
+  VERSION = '0.1.0'
 
   DEFAULT_OPTIONS = {
     :pidfile => File.basename($PROGRAM_NAME, File.extname($PROGRAM_NAME)),
@@ -55,18 +55,45 @@ class BasicDaemon
       exit!
     end
 
-    at_exit do
-      self.delpid
+    #----- Fork off from the calling process -----#
+    begin
+      fork do
+        Process.setsid #----- make forked process session leader
+        fork && exit!
+
+        at_exit do
+          delpid
+        end
+
+        Dir::chdir(@workingdir) #----- chdir to working directory
+        File::umask(0) #----- clear out file mode creation mask
+
+        begin
+          open(self.pidpath, "w") do |f|
+            @pid = Process.pid
+            f.puts @pid
+          end
+        rescue => e
+          STDERR.puts "Error: Unable to open #{self.pidpath} for writing:\n\t" +
+            "(#{e.class}) #{e.message}"
+          exit!
+        end
+
+        STDIN.reopen("/dev/null", 'r')
+        STDOUT.reopen("/dev/null", "w")
+        STDERR.reopen("/dev/null", "w")
+
+        unless block_given?
+          self.run
+        else
+          yield
+        end
+      end
+    rescue => e
+      STDERR.puts "Error: Failed to fork properly: \n\t: " +
+        "(#{e.class}) #{e.message} "
+      exit!
     end
-
-    daemonize
-    self.run
-
-#     unless block_given?
-#       self.run
-#     else
-#       yield
-#     end
   end
   
   #----------------------------------------------------------------------------#
@@ -104,6 +131,12 @@ class BasicDaemon
   end
 
   #----------------------------------------------------------------------------#
+  def run
+  end
+
+  private
+
+  #----------------------------------------------------------------------------#
   def delpid
     begin
       File.unlink(self.pidpath)
@@ -112,46 +145,6 @@ class BasicDaemon
         "(#{e.class}) #{e.message}"
       exit
     end
-  end
-
-  #----------------------------------------------------------------------------#
-  def run
-  end
-
-  private
-
-  #----------------------------------------------------------------------------#
-  def daemonize
-    #----- Fork off from the calling process -----#
-    begin
-      fork && exit!
-      Process.setsid #----- make forked process session leader
-      fork && exit!
-    rescue => e
-      STDERR.puts "Error: Failed to fork properly: \n\t: " +
-        "(#{e.class}) #{e.message} "
-      exit!
-    end
-
-    Dir::chdir(@workingdir) #----- chdir to working directory
-    File::umask(0) #----- clear out file mode creation mask
-
-    begin
-      open(self.pidpath, "w") do |f|
-        @pid = Process.pid
-        f.puts @pid
-      end
-    rescue => e
-      STDERR.puts "Error: Unable to open #{self.pidpath} for writing:\n\t" +
-        "(#{e.class}) #{e.message}"
-      exit!
-    end
-
-    STDIN.reopen("/dev/null", 'r')
-    STDOUT.reopen("/dev/null", "w")
-    STDERR.reopen("/dev/null", "w")
-
-    #----- calling process proceeds from here -----#
   end
 
 end
