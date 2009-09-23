@@ -25,6 +25,7 @@ end
 d = MyDaemon.new(:pidfile => pidfile, :piddir => basedir, :workingdir => basedir)
 
 if ARGV[0] == 'start'
+  puts "Should print 'got here' on the next line"
   d.start
 elsif ARGV[0] == 'stop'
   d.stop
