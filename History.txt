@@ -1,3 +1,17 @@
+= 0.1.1 - 20090925
+
+RSpec testing expansion.
+
+* continuing to add tests to the spec.
+* added a method to the library to determine if a PID is alive
+
+= 0.1.0 - 20090923
+
+Major bug fixes 
+
+* The daemon now correctly forks off from the calling process.
+* The procedural means of executing a daemon have been eliminated.
+
 = 0.0.5 - 20090921
 
 Began moving tests to RSpec. 

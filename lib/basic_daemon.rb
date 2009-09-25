@@ -134,6 +134,30 @@ class BasicDaemon
   def run
   end
 
+  #----------------------------------------------------------------------------#
+  def pid_exists?
+    begin
+      pid = open(self.pidpath, "r").read.to_i
+    rescue Errno::EACCES => e
+      STDERR.puts "Error: Unable to open #{self.pidpath} for reading:\n\t" +
+        "(#{e.class}) #{e.message}"
+      exit!
+    rescue => e
+      return false
+    end
+
+    begin
+      Process.kill(0, pid)
+      true
+    rescue Errno::ESRCH # "PID is NOT running or is zombied
+      false
+#     rescue Errno::EPERM
+#       puts "No permission to query #{pid}!";
+#     rescue
+#       puts "Unable to determine status for #{pid} : #{$!}"
+    end
+  end
+
   private
 
   #----------------------------------------------------------------------------#
