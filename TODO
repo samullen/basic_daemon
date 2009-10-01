@@ -1,0 +1,7 @@
+- make sure this works with ruby1.9 and jruby
+
+- Add an at_exit attribute pointing to a block which will be called at exit
+
+- Build Rakefile
+
+- Finish README and docs

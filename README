@@ -1,0 +1,8 @@
+# look at tmm1's amqp doc for how to write this.
+
+A basic class for creating daemonized processes
+  (c) 2009 Samuel Mullen (samullen)
+
+  http://github.com/samullen/BasicDaemon
+
+This library works with Ruby 1.8, Ruby 1.9, and JRuby.
