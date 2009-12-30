@@ -35,7 +35,7 @@ class BasicDaemon
   end
 
   def pidpath
-    @piddir + '/' + @pidfile
+    File.join(@piddir, @pidfile)
   end
 
   #----------------------------------------------------------------------------#
@@ -135,7 +135,7 @@ class BasicDaemon
   end
 
   #----------------------------------------------------------------------------#
-  def pid_exists?
+  def process_exists?
     begin
       pid = open(self.pidpath, "r").read.to_i
     rescue Errno::EACCES => e
@@ -170,5 +170,4 @@ class BasicDaemon
       exit
     end
   end
-
 end
