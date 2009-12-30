@@ -1,3 +1,10 @@
+= 0.1.2 - 20091230
+
+Switched back to Test::Unit
+
+* Migrated all RSpec tests to Test::Unit
+* Expanded tests to handle calling blocks
+
 = 0.1.1 - 20090925
 
 RSpec testing expansion.
