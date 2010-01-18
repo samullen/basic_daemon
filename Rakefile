@@ -1,28 +1,12 @@
-require 'rake'
+require 'rake/testtask'
  
-begin
-  require 'jeweler'
-  
-  Jeweler::Tasks.new do |gemspec|
-    gemspec.name           = 'basic_daemon'
-    gemspec.version        = '0.1.0'
-    gemspec.author         = "Samuel Mullen"
-    gemspec.email          = "samullen@gmail.com"
-    gemspec.homepage       = "http://github.com/samullen/BasicDaemon"
-    gemspec.summary        = "A simple ruby library for daemonizing processes"
-    gemspec.description    = "A simple ruby library for daemonizing processes"
-  end
-rescue LoadError
-  puts "Jeweler (or a dependency) not available. Install it first!"
-end
- 
-# Dir["#{File.dirname(__FILE__)}/tasks/*.rake"].sort.each { |ext| load ext }
-#  
-# require 'rake/testtask'
-#  
-# Rake::TestTask.new do |t|
-#   t.libs << "test"
-#   t.test_files = FileList['test/*rb']
-#   t.verbose = true
-# end
+lib_dir = File.expand_path('lib')
+test_dir = File.expand_path('test')
 
+Rake::TestTask.new(:test) do |t|
+  t.libs = [lib_dir, test_dir]
+  t.pattern = 'test/**/*rb'
+  t.verbose = true
+end
+
+task :default => [:test]

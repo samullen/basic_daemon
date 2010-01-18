@@ -29,10 +29,13 @@ class TestSubclassedBasicDaemon < Test::Unit::TestCase
   end
 
   def test_creation_deletion_of_pidfile
+    assert_nil @mydaemon.pid, "pidfile shouldn't exist so pid should be nil."
     @mydaemon.start
-    sleep 1 #----- give child proc time to create file
+    sleep 0.1 #----- give child proc time to create file
+    assert (@mydaemon.pid > 1000), "PID should be numeric"
+
     assert File.exists?(@mydaemon.pidpath), "PID file at #{@mydaemon.pidpath} should exist"
-    assert_match /^\d+$/, File.open(@mydaemon.pidpath, 'r').read, "PID should be numeric"
+    assert_match(/^\d+$/, File.open(@mydaemon.pidpath, 'r').read, "PID should be numeric")
 
     @mydaemon.stop
     assert File.exists?(@mydaemon.pidpath) == false, "PID file at #{@mydaemon.pidpath} should not exist"
@@ -41,7 +44,7 @@ class TestSubclassedBasicDaemon < Test::Unit::TestCase
 
   def test_pidfile_removal_upon_termination
     @mydaemon.start
-    sleep 1 #----- give child proc time to create file
+    sleep 0.1 #----- give child proc time to create file
     pid = File.open(@mydaemon.pidpath, 'r').read.to_i
 
     begin
@@ -58,7 +61,7 @@ class TestSubclassedBasicDaemon < Test::Unit::TestCase
 
   def test_backgrounding_of_subclassed_daemon
     @mydaemon.start
-    sleep 1 #----- give child proc time to create file
+    sleep 0.1 #----- give child proc time to create file
     assert @mydaemon.process_exists?
     @mydaemon.stop
     assert @mydaemon.process_exists? == false

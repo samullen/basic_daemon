@@ -1,5 +1,5 @@
-- Add an at_exit attribute pointing to a block which will be called at exit
+- Fix restart
 
-- Build Rakefile
+- Add an at_exit attribute pointing to a block which will be called at exit
 
 - Finish README and docs

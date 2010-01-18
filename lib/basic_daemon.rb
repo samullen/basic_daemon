@@ -1,8 +1,9 @@
+
 class BasicDaemon
   attr_accessor :workingdir, :pidfile, :piddir
-  attr_reader :pid
+#   attr_reader :pid
 
-  VERSION = '0.1.3'
+  VERSION = '0.1.5'
 
   DEFAULT_OPTIONS = {
     :pidfile => File.basename($PROGRAM_NAME, File.extname($PROGRAM_NAME)),
@@ -10,7 +11,14 @@ class BasicDaemon
     :workingdir => '/'
   }
 
-  #----------------------------------------------------------------------------#
+  # Instantiate a new BasicDaemon
+  #
+  # Takes an optional hash with the following symbol keys:
+  # - :piddir = Directory to store the PID file in. Default is /tmp
+  # - :pidfile = name of the file to store the PID in. default is the script 
+  #   name sans extension.
+  # - :workingdir = Directory to work from. Default is "/" and should probably 
+  #   be left as such.
   def initialize(*args)
     opts = {}
 
@@ -31,17 +39,19 @@ class BasicDaemon
     @piddir     = opts[:piddir]
     @pidfile    = opts[:pidfile]
     @workingdir = opts[:workingdir]
-    @pid        = nil
   end
 
+  # Returns the fullpath to the file containing the process ID (PID)
   def pidpath
     File.join(@piddir, @pidfile)
   end
 
-  #----------------------------------------------------------------------------#
-  def start
+  # Returns the PID of the currently running daemon
+  def pid
+    mypid = nil
+
     begin
-      @pid = open(self.pidpath, 'r').read
+      mypid = open(self.pidpath, 'r').read.to_i
     rescue Errno::EACCES => e
       STDERR.puts "Error: unable to open file #{self.pidpath} for reading:\n\t"+
         "(#{e.class}) #{e.message}"
@@ -49,7 +59,13 @@ class BasicDaemon
     rescue => e
     end
 
-    if @pid
+    mypid
+  end
+
+  # Starts the daemon by forking the supplied process either by block or by 
+  # overridden run method.
+  def start
+    if pid
       STDERR.puts "pidfile #{self.pidpath} with pid #{@pid} already exists. " +
         "Make sure this daemon is not already running."
       exit!
@@ -62,7 +78,7 @@ class BasicDaemon
         fork && exit!
 
         at_exit do
-          delpid
+          delpidfile
         end
 
         Dir::chdir(@workingdir) #----- chdir to working directory
@@ -96,18 +112,10 @@ class BasicDaemon
     end
   end
   
-  #----------------------------------------------------------------------------#
+  # stops the daemon. It does this by retrieving the process ID (PID) of the 
+  # currently running process from the pidfile and killing it till it's dead.
   def stop
-    begin
-      @pid = open(self.pidpath, "r").read.to_i
-    rescue Errno::EACCES => e
-      STDERR.puts "Error: Unable to open #{self.pidpath} for reading:\n\t" +
-        "(#{e.class}) #{e.message}"
-      exit!
-    rescue => e
-    end
-
-    unless @pid
+    unless pid
       STDERR.puts "pidfile #{self.pidpath} does not exist. Daemon not running?\n"
       return # not an error in a restart
     end
@@ -124,28 +132,26 @@ class BasicDaemon
     end
   end
 
-  #----------------------------------------------------------------------------#
+  # restarts the daemon by first killing it and then restarting. 
+  #
+  # Warning: does not work if block is initially passed to start.
   def restart
     self.stop
-    self.start
+
+#     if block_given?
+#       self.start
+#     else
+      self.start
+#     end
   end
 
-  #----------------------------------------------------------------------------#
+  # run should be overridden if using BasicDaemon Object Orientedly. 
+  # See examples.
   def run
   end
 
-  #----------------------------------------------------------------------------#
+  # Boolean. Does the current process exist? True or false.
   def process_exists?
-    begin
-      pid = open(self.pidpath, "r").read.to_i
-    rescue Errno::EACCES => e
-      STDERR.puts "Error: Unable to open #{self.pidpath} for reading:\n\t" +
-        "(#{e.class}) #{e.message}"
-      exit!
-    rescue => e
-      return false
-    end
-
     begin
       Process.kill(0, pid)
       true
@@ -161,7 +167,7 @@ class BasicDaemon
   private
 
   #----------------------------------------------------------------------------#
-  def delpid
+  def delpidfile
     begin
       File.unlink(self.pidpath)
     rescue => e

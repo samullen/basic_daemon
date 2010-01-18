@@ -34,6 +34,10 @@ class TestBasicDaemon < Test::Unit::TestCase
     assert_equal @daemon.pidfile, new_pidfile, message
     assert_equal @daemon.pidpath, "/tmp/#{new_pidfile}", message
   end
+
+  def test_pid_method_should_return_nil
+    assert_nil @daemon.pid
+  end
 end
 
 class TestWithSuppliedValues < Test::Unit::TestCase

@@ -26,7 +26,7 @@ class TestFunctionalBasicDaemon < Test::Unit::TestCase
 
     sleep 1 #----- give child proc time to create file
     assert File.exists?(@daemon.pidpath), "PID file at #{@daemon.pidpath} should exist"
-    assert_match /^\d+$/, File.open(@daemon.pidpath, 'r').read, "PID should be numeric"
+    assert_match(/^\d+$/, File.open(@daemon.pidpath, 'r').read, "PID should be numeric")
 
     @daemon.stop
     assert File.exists?(@daemon.pidpath) == false, "PID file at #{@daemon.pidpath} should not exist"
