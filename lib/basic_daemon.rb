@@ -1,7 +1,5 @@
-
 class BasicDaemon
-  attr_accessor :workingdir, :pidfile, :piddir
-#   attr_reader :pid
+  attr_accessor :workingdir, :pidfile, :piddir, :process
 
   VERSION = '0.1.5'
 
@@ -39,6 +37,8 @@ class BasicDaemon
     @piddir     = opts[:piddir]
     @pidfile    = opts[:pidfile]
     @workingdir = opts[:workingdir]
+    @pid        = nil
+    @process    = nil
   end
 
   # Returns the fullpath to the file containing the process ID (PID)
@@ -48,10 +48,10 @@ class BasicDaemon
 
   # Returns the PID of the currently running daemon
   def pid
-    mypid = nil
+    return @pid unless @pid.nil?
 
     begin
-      mypid = open(self.pidpath, 'r').read.to_i
+      @pid = open(self.pidpath, 'r').read.to_i
     rescue Errno::EACCES => e
       STDERR.puts "Error: unable to open file #{self.pidpath} for reading:\n\t"+
         "(#{e.class}) #{e.message}"
@@ -59,16 +59,20 @@ class BasicDaemon
     rescue => e
     end
 
-    mypid
+    @pid
   end
 
   # Starts the daemon by forking the supplied process either by block or by 
   # overridden run method.
-  def start
+  def start(&block)
     if pid
       STDERR.puts "pidfile #{self.pidpath} with pid #{@pid} already exists. " +
         "Make sure this daemon is not already running."
       exit!
+    end
+
+    if block_given?
+      @process = block
     end
 
     #----- Fork off from the calling process -----#
@@ -99,15 +103,15 @@ class BasicDaemon
         STDOUT.reopen("/dev/null", "w")
         STDERR.reopen("/dev/null", "w")
 
-        unless block_given?
-          self.run
+        unless @process.nil?
+          @process.call
         else
-          yield
+          self.run
         end
       end
     rescue => e
       STDERR.puts "Error: Failed to fork properly: \n\t: " +
-        "(#{e.class}) #{e.message} "
+        "(#{e.class}) #{e.message}"
       exit!
     end
   end
@@ -115,7 +119,7 @@ class BasicDaemon
   # stops the daemon. It does this by retrieving the process ID (PID) of the 
   # currently running process from the pidfile and killing it till it's dead.
   def stop
-    unless pid
+    unless self.pid
       STDERR.puts "pidfile #{self.pidpath} does not exist. Daemon not running?\n"
       return # not an error in a restart
     end
@@ -125,7 +129,7 @@ class BasicDaemon
         Process.kill("TERM", self.pid)
         sleep(0.1)
       end
-    rescue Errno::ESRCH
+    rescue Errno::ESRCH # gets here when there is no longer a process to kill
     rescue => e
       STDERR.puts "unable to terminate process: (#{e.class}) #{e.message}"
       exit!
@@ -137,31 +141,35 @@ class BasicDaemon
   # Warning: does not work if block is initially passed to start.
   def restart
     self.stop
+    @pid = nil
 
-#     if block_given?
-#       self.start
-#     else
+    unless @process.nil?
       self.start
-#     end
+    else
+      self.start &@process
+    end
+  end
+
+  # Boolean. Does the current process exist? True or false.
+  # Reads the PID from the pidfile and attempts to "kill 0" the process.
+  # Success results in true; failure, false.
+  def process_exists?
+    begin
+      Process.kill(0, self.pid)
+      true
+    rescue Errno::ESRCH, TypeError # "PID is NOT running or is zombied
+      false
+    rescue Errno::EPERM
+      STDERR.puts "No permission to query #{pid}!";
+    rescue => e
+      STDERR.puts "(#{e.class}) #{e.message}:\n\t" << 
+        "Unable to determine status for #{pid}."
+    end
   end
 
   # run should be overridden if using BasicDaemon Object Orientedly. 
   # See examples.
   def run
-  end
-
-  # Boolean. Does the current process exist? True or false.
-  def process_exists?
-    begin
-      Process.kill(0, pid)
-      true
-    rescue Errno::ESRCH # "PID is NOT running or is zombied
-      false
-#     rescue Errno::EPERM
-#       puts "No permission to query #{pid}!";
-#     rescue
-#       puts "Unable to determine status for #{pid} : #{$!}"
-    end
   end
 
   private

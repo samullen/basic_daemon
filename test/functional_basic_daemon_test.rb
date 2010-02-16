@@ -21,10 +21,14 @@ class TestFunctionalBasicDaemon < Test::Unit::TestCase
     end
   end
 
+  def teardown
+    @daemon.process_exists? && @daemon.stop
+  end
+
   def test_creation_deletion_of_pidfile
     @daemon.start &@process
 
-    sleep 1 #----- give child proc time to create file
+    sleep 0.1 #----- give child proc time to create file
     assert File.exists?(@daemon.pidpath), "PID file at #{@daemon.pidpath} should exist"
     assert_match(/^\d+$/, File.open(@daemon.pidpath, 'r').read, "PID should be numeric")
 
@@ -35,7 +39,7 @@ class TestFunctionalBasicDaemon < Test::Unit::TestCase
 
   def test_pidfile_removal_upon_termination
     @daemon.start &@process
-    sleep 1 #----- give child proc time to create file
+    sleep 0.1 #----- give child proc time to create file
     pid = File.open(@daemon.pidpath, 'r').read.to_i
 
     begin
@@ -45,16 +49,28 @@ class TestFunctionalBasicDaemon < Test::Unit::TestCase
       end
     rescue Errno::ESRCH
     end
-
     assert @daemon.process_exists? == false
+
     assert File.exists?(@daemon.pidpath) == false
   end
 
   def test_backgrounding_of_subclassed_daemon
     @daemon.start &@process
-    sleep 1 #----- give child proc time to create file
+    sleep 0.1 #----- give child proc time to create file
     assert @daemon.process_exists?
     @daemon.stop
     assert @daemon.process_exists? == false
+  end
+
+  def test_restart
+    @daemon.start &@process
+    sleep 0.1
+    assert @daemon.process_exists?
+    previous_pid = @daemon.pid
+
+    @daemon.restart
+    sleep 0.1
+    assert @daemon.process_exists?
+    assert previous_pid != @daemon.pid
   end
 end
