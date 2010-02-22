@@ -68,7 +68,7 @@ class TestFunctionalBasicDaemon < Test::Unit::TestCase
     assert @daemon.process_exists?
     previous_pid = @daemon.pid
 
-    @daemon.restart
+    @daemon.restart &@process
     sleep 0.1
     assert @daemon.process_exists?
     assert previous_pid != @daemon.pid

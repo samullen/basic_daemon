@@ -20,11 +20,10 @@ gem_spec = Gem::Specification.new do |s|
   s.test_files = Dir['test/**/*.rb']
   s.description = false
   s.files = [
-#     "History.txt",
-#     "License.txt",
-    "README",
-#     "Rakefile",
-#     "TODO",
+    "History.rdoc",
+    "LICENSE",
+    "README.rdoc",
+    "Rakefile",
     "examples/functional.rb",
     "examples/objectoriented.rb",
     "lib/basic_daemon.rb"

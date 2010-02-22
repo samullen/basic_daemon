@@ -38,7 +38,6 @@ class BasicDaemon
     @pidfile    = opts[:pidfile]
     @workingdir = opts[:workingdir]
     @pid        = nil
-    @process    = nil
   end
 
   # Returns the fullpath to the file containing the process ID (PID)
@@ -71,10 +70,6 @@ class BasicDaemon
       exit!
     end
 
-    if block_given?
-      @process = block
-    end
-
     #----- Fork off from the calling process -----#
     begin
       fork do
@@ -103,8 +98,8 @@ class BasicDaemon
         STDOUT.reopen("/dev/null", "w")
         STDERR.reopen("/dev/null", "w")
 
-        unless @process.nil?
-          @process.call
+        if block_given?
+          block.call
         else
           self.run
         end
@@ -139,14 +134,14 @@ class BasicDaemon
   # restarts the daemon by first killing it and then restarting. 
   #
   # Warning: does not work if block is initially passed to start.
-  def restart
+  def restart(&block)
     self.stop
     @pid = nil
 
-    unless @process.nil?
+    unless block_given?
       self.start
     else
-      self.start &@process
+      self.start &block
     end
   end
 

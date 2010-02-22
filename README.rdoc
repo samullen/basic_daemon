@@ -1,21 +1,28 @@
-A basic library for creating daemonized processes
-  (c) 2009 Samuel Mullen (samullen)
+= BasicDaemon
 
-  http://github.com/samullen/basic_daemon
+http://github.com/samullen/basic_daemon
+
+A basic library for creating daemonized processes
 
 This library works with Ruby 1.8, Ruby 1.9, and JRuby and is licensed under the MIT License.
 
-Installation
+== Installation
 
-sudo gem install basic_daemon
+The basic_daemon gem is hosted on GemCutter (http://gemcutter.org). This
+requires that you have http://gemcutter.org in your gem sources.
 
-Gettings Started
+Install the basic_daemon gem: 
 
-There are currently two ways of using the basic_daemon library: 1) Objected Oriented; 2) Functional.
+  sudo gem install basic_daemon
 
-Object Oriented 
+== Gettings Started
 
-The basic idea here is to subclass BasicDaemon and overwrite the "run" method.
+There are currently two ways of using the basic_daemon library: 1) Objected
+Oriented; 2) Functional.
+
+=== Object Oriented 
+
+The basic idea here is to subclass BasicDaemon and overwride the "run" method.
 
   require 'basic_daemon'
 
@@ -49,7 +56,7 @@ The basic idea here is to subclass BasicDaemon and overwrite the "run" method.
     exit!
   end
 
-Functional
+=== Functional
 
 Rather than subclassing BasicDaemon, a block is just passed to the start method.
 
@@ -57,8 +64,7 @@ Rather than subclassing BasicDaemon, a block is just passed to the start method.
 
   daemon = BasicDaemon.new
 
-  if ARGV[0] == 'start'
-    daemon.start do
+  process = Proc.new do
       foo = open("/tmp/out", "w")
 
       i = 1
@@ -71,24 +77,36 @@ Rather than subclassing BasicDaemon, a block is just passed to the start method.
         i += 1
       end
     end
+
+  if ARGV[0] == 'start'
+    daemon.start &process
   elsif ARGV[0] == 'stop'
     daemon.stop
     exit!
   elsif ARGV[0] == 'restart'
-    daemon.restart
+    daemon.restart &process
   else
     STDERR.puts "Usage: foo_daemon.rb <start|stop|restart>"
     exit!
   end
 
-Arguments
+=== Arguments
 
-BasicDaemon creates file to store the process ID (PID). By default, this file is given the same name as the calling script sans the file extension and is stored in the /tmp directory. Also by default, the directory the calling script is working in is changed to the root directory ('/').
+BasicDaemon creates file to store the process ID (PID). By default, this file
+is given the same name as the calling script sans the file extension and is
+stored in the /tmp directory. Also by default, the directory the calling script
+is working in is changed to the root directory ('/').
 
-Each argument, :pidfile, :piddir, :workingdir, can be changed upon instantiation of the class. 
+Each argument, :pidfile, :piddir, :workingdir, can be changed upon
+instantiation of the class. 
 
-Example:
+==== Example:
 
 Most Linux users will want to instantiate thusly:
 
   BasicDaemon.new(:piddir => '/var/lock')
+
+== Copyright
+
+Copyright(c) 2009 Samuel Mullen (samullen). See LICENSE for details
+
