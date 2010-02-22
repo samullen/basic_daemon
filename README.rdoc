@@ -1,13 +1,17 @@
 A basic library for creating daemonized processes
   (c) 2009 Samuel Mullen (samullen)
 
-  http://github.com/samullen/BasicDaemon
+  http://github.com/samullen/basic_daemon
 
-This library works with Ruby 1.8, Ruby 1.9, and JRuby and is licensed under ... .
+This library works with Ruby 1.8, Ruby 1.9, and JRuby and is licensed under the MIT License.
+
+Installation
+
+sudo gem install basic_daemon
 
 Gettings Started
 
-There are currently two ways of using the basic_daemon library: 1) Objected Oriented; 2) Functional. There are plans to add in a more procedural way of daemonizing, but testing almost goes out the window in that case.
+There are currently two ways of using the basic_daemon library: 1) Objected Oriented; 2) Functional.
 
 Object Oriented 
 
@@ -87,8 +91,4 @@ Example:
 
 Most Linux users will want to instantiate thusly:
 
-  BasicDaemon.new(:piddir => '/var/lock'
-
-Installation
-
-pending
+  BasicDaemon.new(:piddir => '/var/lock')
