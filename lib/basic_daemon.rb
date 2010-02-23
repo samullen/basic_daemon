@@ -1,7 +1,7 @@
 class BasicDaemon
   attr_accessor :workingdir, :pidfile, :piddir, :process
 
-  VERSION = '0.9.1'
+  VERSION = '1.0.0'
 
   DEFAULT_OPTIONS = {
     :pidfile => File.basename($PROGRAM_NAME, File.extname($PROGRAM_NAME)),
@@ -9,14 +9,14 @@ class BasicDaemon
     :workingdir => '/'
   }
 
-  # Instantiate a new BasicDaemon
-  #
-  # Takes an optional hash with the following symbol keys:
-  # - :piddir = Directory to store the PID file in. Default is /tmp
-  # - :pidfile = name of the file to store the PID in. default is the script 
-  #   name sans extension.
-  # - :workingdir = Directory to work from. Default is "/" and should probably 
-  #   be left as such.
+# Instantiate a new BasicDaemon
+#
+# Takes an optional hash with the following symbol keys:
+# - :piddir = Directory to store the PID file in. Default is /tmp
+# - :pidfile = name of the file to store the PID in. default is the script 
+#   name sans extension.
+# - :workingdir = Directory to work from. Default is "/" and should probably 
+#   be left as such.
   def initialize(*args)
     opts = {}
 
@@ -77,22 +77,13 @@ class BasicDaemon
         fork && exit!
 
         at_exit do
-          delpidfile
+          remove_pidfile
         end
 
         Dir::chdir(@workingdir) #----- chdir to working directory
         File::umask(0) #----- clear out file mode creation mask
 
-        begin
-          open(self.pidpath, "w") do |f|
-            @pid = Process.pid
-            f.puts @pid
-          end
-        rescue => e
-          STDERR.puts "Error: Unable to open #{self.pidpath} for writing:\n\t" +
-            "(#{e.class}) #{e.message}"
-          exit!
-        end
+        create_pidfile
 
         STDIN.reopen("/dev/null", 'r')
         STDOUT.reopen("/dev/null", "w")
@@ -169,8 +160,22 @@ class BasicDaemon
 
   private
 
-  #----------------------------------------------------------------------------#
-  def delpidfile
+  # Writes the process ID to the pidfile and defines @pid as such
+  def create_pidfile
+    begin
+      open(self.pidpath, "w") do |f|
+        @pid = Process.pid
+        f.puts @pid
+      end
+    rescue => e
+      STDERR.puts "Error: Unable to open #{self.pidpath} for writing:\n\t" +
+        "(#{e.class}) #{e.message}"
+      exit!
+    end
+  end
+
+  # removes the pidfile. Called on exit
+  def remove_pidfile
     begin
       File.unlink(self.pidpath)
     rescue => e

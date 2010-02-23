@@ -20,7 +20,6 @@ gem_spec = Gem::Specification.new do |s|
   s.test_files = Dir['test/**/*.rb']
   s.description = false
   s.files = [
-    "History.rdoc",
     "LICENSE",
     "README.rdoc",
     "Rakefile",

@@ -7,6 +7,8 @@ pidfile = File.basename($PROGRAM_NAME, File.extname($PROGRAM_NAME))
 
 d = BasicDaemon.new({:pidfile => pidfile, :piddir => basedir, :workingdir => basedir})
 
+# for restarts to work properly, you can't use anonymous blocks. In other
+# words, blocks have to be assigned to a variable
 process = Proc.new do
   i = 1
   foo = open(basedir + "/out", "w")
